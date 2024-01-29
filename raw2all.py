@@ -1,3 +1,4 @@
+import re
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
 from bibtexparser.bwriter import BibTexWriter
@@ -81,6 +82,16 @@ def abbr2full(abbr: str):
         raise Exception(f'Unrecognized abbreviation: {abbr}')
 
 
+def fix_name(authors):
+    # BetterBibTex does not handle name prefix
+    prefix_pattern = r'family=\w+, given=\w+, prefix=\w+, useprefix=true'
+    for name in re.findall(prefix_pattern, authors):
+        pieces = re.findall(r'family=(\w+), given=(\w+), prefix=(\w+), useprefix=true', name)[0]
+        new_name = f'{pieces[2]} {pieces[0]}, {pieces[1]}'
+        authors = authors.replace(name, new_name)
+    return authors
+
+
 def raw2all():
     parser = BibTexParser(common_strings=False, ignore_nonstandard_types=False)
     raw_path = './raw.bib'
@@ -108,6 +119,8 @@ def raw2all():
             entry['ENTRYTYPE'] = 'misc'
             for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue', 'booktitle']:
                 entry.pop(to_remove, None)
+
+        entry['author'] = fix_name(entry['author'])
 
         if 'url' in entry:
             # prefer using https
