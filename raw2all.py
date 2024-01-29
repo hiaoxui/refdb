@@ -5,6 +5,7 @@ from bibtexparser.bwriter import BibTexWriter
 
 
 mapping = {
+    '*SEM': 'Conference on Lexical and Computational Semantics',
     'AAAI': 'Association for the Advancement of Artificial Intelligence',
     'ACL': 'Annual Meeting of the Association for Computational Linguistics',
     'AI': 'Artificial Intelligence',
