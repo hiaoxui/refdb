@@ -111,6 +111,8 @@ def raw2all():
             entry['journal'] = abbr2full(entry['journaltitle'])
             entry.pop('journaltitle', None)
             entry.pop('booktitle', None)
+            if 'number' in entry:
+                entry['issue'] = entry.pop('number')
         elif entry['ENTRYTYPE'] == 'inproceedings':
             entry['booktitle'] = 'Proceedings of ' + abbr2full(entry['booktitle']).strip()
             for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue']:
