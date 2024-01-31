@@ -130,8 +130,13 @@ def raw2all():
             entry['url'] = entry['url'].replace('http://', 'https://')
             if not entry['url'].startswith('http'):
                 entry.pop('url', None)
-        elif 'doi' in entry:
-            entry['url'] = 'https://doi.org/' + entry['doi']
+        else:
+            if 'doi' in entry:
+                entry['url'] = 'https://doi.org/' + entry['doi']
+            elif entry.get('eprinttype', '') == 'arxiv' and 'eprint' in entry:
+                arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
+                if any([re.findall(pat, entry['eprint']) for pat in arxiv_patterns]):
+                    entry['url'] = 'https://arxiv.org/abs/' + entry['eprint']
 
         tokeep = [
             'author', 'booktitle', 'year', 'url', 'journal', 'volumn', 'number',
