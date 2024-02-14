@@ -51,7 +51,7 @@ mapping = {
     'PNAS': 'Proceedings of the National Academy of Sciences of the United States of America',
     'RECSYS': 'ACM Conference on Recommender Systems',
     'SALT': 'Semantics and Linguistic Theory',
-    'SIGIR': 'ACM Special Interest Group on Information Retreival',
+    'SIGIR': 'ACM Special Interest Group on Information Retrieval',
     'SODA': 'Symposium on Discrete Algorithms',
     'STOC': 'Symposium on Theory of Computing',
     'TACL': 'Transactions of the Association for Computational Linguistics',
