@@ -45,6 +45,7 @@ mapping = {
     'MLSLP': 'Symposium on Machine Learning in Speech and Language Processing',
     'NAACL': 'Annual Conference of the North American Chapter of the Association for Computational Linguistics',
     'NeurIPS': 'Conference on Neural Information Processing Systems',
+    'NCB': 'Nature Cell Biology',
     'NODALIDA': 'Nordic Conference on Computational Linguistics',
     'OSDI': 'Operating Systems Design and Implementation',
     'PAMI': 'IEEE Transactions on Pattern Analysis and Machine Intelligence',
