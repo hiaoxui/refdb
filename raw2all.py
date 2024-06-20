@@ -138,8 +138,6 @@ def process_entry(entry):
         entry['booktitle'] = 'Proceedings of ' + abbr2full(entry['booktitle']).strip()
     elif entry['ENTRYTYPE'] == 'incollection':
         to_keep = ['booktitle', 'pages', 'publisher']
-    elif entry['ENTRYTYPE'] == 'software':
-        to_keep = []
     elif entry['ENTRYTYPE'] == 'thesis':
         to_keep = ['institution', 'type']
     else:
