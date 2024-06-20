@@ -1,5 +1,6 @@
 import re
 import traceback
+from copy import deepcopy
 import bibtexparser
 from collections import defaultdict
 from bibtexparser.bparser import BibTexParser
@@ -99,6 +100,7 @@ def fix_name(authors):
 
 
 def process_entry(entry):
+    entry = deepcopy(entry)
     # remove illegal items
     if 'author' not in entry or entry['author'] == '':
         return None
@@ -139,7 +141,7 @@ def process_entry(entry):
     elif entry['ENTRYTYPE'] == 'software':
         to_keep = []
     elif entry['ENTRYTYPE'] == 'thesis':
-        to_keep = ['institution']
+        to_keep = ['institution', 'type']
     else:
         entry['ENTRYTYPE'] = 'misc'
         to_keep = []
@@ -170,7 +172,7 @@ def raw2all():
     parser = BibTexParser(common_strings=False, ignore_nonstandard_types=False)
     raw_path = './raw.bib'
     bib_db = bibtexparser.loads(open(raw_path, 'r', encoding='utf8').read(), parser)
-    inspect(bib_db)
+    # inspect(bib_db)
 
     new_entries = list()
     errored = list()
