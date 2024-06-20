@@ -1,4 +1,5 @@
 import re
+import traceback
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
 from bibtexparser.bwriter import BibTexWriter
@@ -96,61 +97,79 @@ def fix_name(authors):
     return authors
 
 
+def process_entry(entry):
+    # remove illegal items
+    if 'author' not in entry or entry['author'] == '':
+        return None
+    if 'nobib' in entry.get('keywords', ''):
+        return None
+    # clean up fields
+    if 'date' in entry and 'year' not in entry:
+        entry['year'] = entry['date'][:4]
+        del entry['date']
+    if entry['ENTRYTYPE'] == 'article':
+        entry['journal'] = abbr2full(entry['journaltitle'])
+        entry.pop('journaltitle', None)
+        entry.pop('booktitle', None)
+        if 'number' in entry:
+            entry['issue'] = entry.pop('number')
+    elif entry['ENTRYTYPE'] == 'inproceedings':
+        entry['booktitle'] = 'Proceedings of ' + abbr2full(entry['booktitle']).strip()
+        for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue']:
+            entry.pop(to_remove, None)
+    elif entry['ENTRYTYPE'] == 'software':
+        pass
+    else:
+        entry['ENTRYTYPE'] = 'misc'
+        for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue', 'booktitle']:
+            entry.pop(to_remove, None)
+
+    entry['author'] = fix_name(entry['author'])
+
+    if 'url' in entry:
+        # prefer using https
+        entry['url'] = entry['url'].replace('http://', 'https://')
+        if not entry['url'].startswith('http'):
+            entry.pop('url', None)
+    else:
+        if 'doi' in entry:
+            entry['url'] = 'https://doi.org/' + entry['doi']
+        elif entry.get('eprinttype', '') == 'arxiv' and 'eprint' in entry:
+            arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
+            if any([re.findall(pat, entry['eprint']) for pat in arxiv_patterns]):
+                entry['url'] = 'https://arxiv.org/abs/' + entry['eprint']
+
+    tokeep = [
+        'author', 'booktitle', 'year', 'url', 'journal', 'volumn', 'number',
+        'pages', 'issue', 'ENTRYTYPE', 'ID', 'title',
+    ]
+    for k in list(entry):
+        if k not in tokeep:
+            entry.pop(k, None)
+    return entry
+
+
 def raw2all():
     parser = BibTexParser(common_strings=False, ignore_nonstandard_types=False)
     raw_path = './raw.bib'
     bib_db = bibtexparser.loads(open(raw_path, 'r', encoding='utf8').read(), parser)
 
-    def process_entry(entry):
-        # remove illegal items
-        if 'author' not in entry or entry['author'] == '':
-            return None
-        if 'nobib' in entry.get('keywords', ''):
-            return None
-        # clean up fields
-        if 'date' in entry and 'year' not in entry:
-            entry['year'] = entry['date'][:4]
-            del entry['date']
-        if entry['ENTRYTYPE'] == 'article':
-            entry['journal'] = abbr2full(entry['journaltitle'])
-            entry.pop('journaltitle', None)
-            entry.pop('booktitle', None)
-            if 'number' in entry:
-                entry['issue'] = entry.pop('number')
-        elif entry['ENTRYTYPE'] == 'inproceedings':
-            entry['booktitle'] = 'Proceedings of ' + abbr2full(entry['booktitle']).strip()
-            for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue']:
-                entry.pop(to_remove, None)
-        else:
-            entry['ENTRYTYPE'] = 'misc'
-            for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue', 'booktitle']:
-                entry.pop(to_remove, None)
+    new_entries = list()
+    errored = list()
+    for entry in list(bib_db.entries):
+        try:
+            processed = process_entry(entry)
+        except Exception as e:
+            print(traceback.format_exc())
+            errored.append(entry['ID'])
+            processed = None
+        if processed:
+            new_entries.append(processed)
 
-        entry['author'] = fix_name(entry['author'])
+    if errored:
+        print('Error when processing', ' '.join(errored))
 
-        if 'url' in entry:
-            # prefer using https
-            entry['url'] = entry['url'].replace('http://', 'https://')
-            if not entry['url'].startswith('http'):
-                entry.pop('url', None)
-        else:
-            if 'doi' in entry:
-                entry['url'] = 'https://doi.org/' + entry['doi']
-            elif entry.get('eprinttype', '') == 'arxiv' and 'eprint' in entry:
-                arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
-                if any([re.findall(pat, entry['eprint']) for pat in arxiv_patterns]):
-                    entry['url'] = 'https://arxiv.org/abs/' + entry['eprint']
-
-        tokeep = [
-            'author', 'booktitle', 'year', 'url', 'journal', 'volumn', 'number',
-            'pages', 'issue', 'ENTRYTYPE', 'ID', 'title',
-        ]
-        for k in list(entry):
-            if k not in tokeep:
-                entry.pop(k, None)
-        return entry
-
-    bib_db.entries = list(filter(lambda z: z is not None, map(process_entry, bib_db.entries)))
+    bib_db.entries = new_entries
 
     writer = BibTexWriter()
     writer.indent = '  '
