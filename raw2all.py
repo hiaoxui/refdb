@@ -1,6 +1,7 @@
 import re
 import traceback
 import bibtexparser
+from collections import defaultdict
 from bibtexparser.bparser import BibTexParser
 from bibtexparser.bwriter import BibTexWriter
 
@@ -103,29 +104,9 @@ def process_entry(entry):
         return None
     if 'nobib' in entry.get('keywords', ''):
         return None
-    # clean up fields
+
     if 'date' in entry and 'year' not in entry:
         entry['year'] = entry['date'][:4]
-        del entry['date']
-    if entry['ENTRYTYPE'] == 'article':
-        entry['journal'] = abbr2full(entry['journaltitle'])
-        entry.pop('journaltitle', None)
-        entry.pop('booktitle', None)
-        if 'number' in entry:
-            entry['issue'] = entry.pop('number')
-    elif entry['ENTRYTYPE'] == 'inproceedings':
-        entry['booktitle'] = 'Proceedings of ' + abbr2full(entry['booktitle']).strip()
-        for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue']:
-            entry.pop(to_remove, None)
-    elif entry['ENTRYTYPE'] == 'software':
-        pass
-    else:
-        entry['ENTRYTYPE'] = 'misc'
-        for to_remove in ['journal', 'volumn', 'number', 'pages', 'publisher', 'issue', 'booktitle']:
-            entry.pop(to_remove, None)
-
-    entry['author'] = fix_name(entry['author'])
-
     if 'url' in entry:
         # prefer using https
         entry['url'] = entry['url'].replace('http://', 'https://')
@@ -138,21 +119,58 @@ def process_entry(entry):
             arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
             if any([re.findall(pat, entry['eprint']) for pat in arxiv_patterns]):
                 entry['url'] = 'https://arxiv.org/abs/' + entry['eprint']
+    entry['author'] = fix_name(entry['author'])
 
     tokeep = [
         'author', 'booktitle', 'year', 'url', 'journal', 'volumn', 'number',
-        'pages', 'issue', 'ENTRYTYPE', 'ID', 'title',
+        'pages', 'issue', 'ENTRYTYPE', 'ID', 'title', 'publisher', 'institution', 'type'
     ]
+    # clean up fields
+    if entry['ENTRYTYPE'] == 'article':
+        to_keep = ['journal', 'volume', 'issue', 'publisher', 'pages']
+        entry['journal'] = abbr2full(entry['journaltitle'])
+        if 'number' in entry:
+            entry['issue'] = entry.pop('number')
+    elif entry['ENTRYTYPE'] == 'inproceedings':
+        to_keep = ['booktitle']
+        entry['booktitle'] = 'Proceedings of ' + abbr2full(entry['booktitle']).strip()
+    elif entry['ENTRYTYPE'] == 'incollection':
+        to_keep = ['booktitle', 'pages', 'publisher']
+    elif entry['ENTRYTYPE'] == 'software':
+        to_keep = []
+    elif entry['ENTRYTYPE'] == 'thesis':
+        to_keep = ['institution']
+    else:
+        entry['ENTRYTYPE'] = 'misc'
+        to_keep = []
+
+    common_keeps = ['ENTRYTYPE', 'ID', 'year', 'url', 'author', 'title']
     for k in list(entry):
-        if k not in tokeep:
+        if k not in common_keeps + to_keep:
             entry.pop(k, None)
     return entry
+
+
+def inspect(bib_db):
+    entries = defaultdict(list)
+    for entry in bib_db.entries:
+        entries[entry['ENTRYTYPE']].append(entry)
+    for entry_type, items in entries.items():
+        print('-' * 20)
+        print(entry_type, len(items))
+        fields = set()
+        for entry in items:
+            fields.update(set(entry.keys()))
+        print('fields:', ', '.join(fields))
+        if len(items) < 10:
+            print('They are: ', ', '.join([item['ID'] for item in items]))
 
 
 def raw2all():
     parser = BibTexParser(common_strings=False, ignore_nonstandard_types=False)
     raw_path = './raw.bib'
     bib_db = bibtexparser.loads(open(raw_path, 'r', encoding='utf8').read(), parser)
+    inspect(bib_db)
 
     new_entries = list()
     errored = list()
