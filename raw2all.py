@@ -123,10 +123,6 @@ def process_entry(entry):
                 entry['url'] = 'https://arxiv.org/abs/' + entry['eprint']
     entry['author'] = fix_name(entry['author'])
 
-    tokeep = [
-        'author', 'booktitle', 'year', 'url', 'journal', 'volumn', 'number',
-        'pages', 'issue', 'ENTRYTYPE', 'ID', 'title', 'publisher', 'institution', 'type'
-    ]
     # clean up fields
     if entry['ENTRYTYPE'] == 'article':
         to_keep = ['journal', 'volume', 'issue', 'publisher', 'pages']
