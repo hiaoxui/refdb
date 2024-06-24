@@ -1,10 +1,12 @@
 import re
 import traceback
 from copy import deepcopy
-import bibtexparser
 from collections import defaultdict
-from bibtexparser.bparser import BibTexParser
-from bibtexparser.bwriter import BibTexWriter
+
+import bibtexparser
+from bibtexparser.model import Entry, Field
+from bibtexparser.library import Library
+from bibtexparser.writer import BibtexFormat
 
 
 mapping = {
@@ -99,52 +101,57 @@ def fix_name(authors):
     return authors
 
 
-def process_entry(entry):
-    entry = deepcopy(entry)
+def process_entry(entry1) -> Entry | None:
+    entry1 = deepcopy(entry1)
+    fields = entry1.fields_dict
     # remove illegal items
-    if 'author' not in entry or entry['author'] == '':
+    if 'author' not in fields or fields['author'] == '':
         return None
-    if 'nobib' in entry.get('keywords', ''):
+    if 'keywords' in fields and 'nobib' in fields['keywords'].value:
         return None
 
-    if 'date' in entry and 'year' not in entry:
-        entry['year'] = entry['date'][:4]
-    if 'url' in entry:
-        # prefer using https
-        entry['url'] = entry['url'].replace('http://', 'https://')
-        if not entry['url'].startswith('http'):
-            entry.pop('url', None)
+    new = dict()
+    if 'date' in fields and 'year' not in fields:
+        new['year'] = fields['date'].value[:4]
     else:
-        if 'doi' in entry:
-            entry['url'] = 'https://doi.org/' + entry['doi']
-        elif entry.get('eprinttype', '') == 'arxiv' and 'eprint' in entry:
+        new['year'] = fields['year']
+    if 'url' in fields:
+        # prefer using https
+        new['url'] = fields['url'].value.replace('http://', 'https://')
+        if not new['url'].startswith('http'):
+            new.pop('url', None)
+    else:
+        if 'doi' in fields:
+            new['url'] = 'https://doi.org/' + fields['doi'].value
+        elif fields.get('eprinttype', '') == 'arxiv' and 'eprint' in fields:
             arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
-            if any([re.findall(pat, entry['eprint']) for pat in arxiv_patterns]):
-                entry['url'] = 'https://arxiv.org/abs/' + entry['eprint']
-    entry['author'] = fix_name(entry['author'])
+            if any([re.findall(pat, fields['eprint'].value) for pat in arxiv_patterns]):
+                new['url'] = 'https://arxiv.org/abs/' + fields['eprint'].value
+    new['author'] = fix_name(fields['author'].value)
 
+    et = entry1.entry_type
     # clean up fields
-    if entry['ENTRYTYPE'] == 'article':
-        to_keep = ['journal', 'volume', 'issue', 'publisher', 'pages']
-        entry['journal'] = abbr2full(entry['journaltitle'])
-        if 'number' in entry:
-            entry['issue'] = entry.pop('number')
-    elif entry['ENTRYTYPE'] == 'inproceedings':
-        to_keep = ['booktitle']
-        entry['booktitle'] = 'Proceedings of ' + abbr2full(entry['booktitle']).strip()
-    elif entry['ENTRYTYPE'] == 'incollection':
+    if entry1.entry_type == 'article':
+        to_keep = ['volume', 'issue', 'publisher', 'pages']
+        new['journal'] = abbr2full(fields['journaltitle'].value)
+        if 'number' in fields:
+            new['issue'] = fields['number'].value
+    elif entry1.entry_type == 'inproceedings':
+        to_keep = []
+        new['booktitle'] = 'Proceedings of ' + abbr2full(fields['booktitle'].value).strip()
+    elif entry1.entry_type == 'incollection':
         to_keep = ['booktitle', 'pages', 'publisher']
-    elif entry['ENTRYTYPE'] == 'thesis':
+    elif entry1.entry_type == 'thesis':
         to_keep = ['institution', 'type']
     else:
-        entry['ENTRYTYPE'] = 'misc'
+        et = 'misc'
         to_keep = []
 
-    common_keeps = ['ENTRYTYPE', 'ID', 'year', 'url', 'author', 'title']
-    for k in list(entry):
-        if k not in common_keeps + to_keep:
-            entry.pop(k, None)
-    return entry
+    common_keeps = ['year', 'url', 'author', 'title']
+    for k in list(fields):
+        if k in common_keeps + to_keep:
+            new[k] = fields[k].value
+    return Entry(et, entry1.key, [Field(key, value) for key, value in new.items()])
 
 
 def inspect(bib_db):
@@ -163,9 +170,8 @@ def inspect(bib_db):
 
 
 def raw2all():
-    parser = BibTexParser(common_strings=False, ignore_nonstandard_types=False)
     raw_path = './raw.bib'
-    bib_db = bibtexparser.loads(open(raw_path, 'r', encoding='utf8').read(), parser)
+    bib_db = bibtexparser.parse_file(raw_path)
     # inspect(bib_db)
 
     new_entries = list()
@@ -175,7 +181,7 @@ def raw2all():
             processed = process_entry(entry)
         except Exception as e:
             print(traceback.format_exc())
-            errored.append(entry['ID'])
+            errored.append(entry.key)
             processed = None
         if processed:
             new_entries.append(processed)
@@ -183,13 +189,10 @@ def raw2all():
     if errored:
         print('Error when processing', ' '.join(errored))
 
-    bib_db.entries = new_entries
-
-    writer = BibTexWriter()
-    writer.indent = '  '
-    # writer.comma_first = True
-    with open('ref.bib', 'w') as bibfile:
-        bibfile.write(writer.write(bib_db))
+    new_db = Library(new_entries)
+    bib_format = BibtexFormat()
+    bib_format.indent = '  '
+    bibtexparser.write_file('./ref.bib', new_db, bibtex_format=bib_format)
 
 
 if __name__ == '__main__':
