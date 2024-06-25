@@ -147,7 +147,7 @@ def process_entry(entry1) -> Entry | None:
         et = 'misc'
         to_keep = []
 
-    common_keeps = ['year', 'url', 'author', 'title']
+    common_keeps = ['year', 'url', 'title']
     for k in list(fields):
         if k in common_keeps + to_keep:
             new[k] = fields[k].value
