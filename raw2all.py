@@ -30,6 +30,7 @@ mapping = {
     'EMNLP': 'Conference on Empirical Methods in Natural Language Processing',
     'FOCS': 'Foundations of Computer Science',
     'HLT': 'Human Language Technology',
+    'ICASSP': 'International Conference on Acoustics, Speech, and Signal Processing',
     'ICCV': 'IEEE International Conference on Computer Vision',
     'ICIPS': 'IEEE International Conference on Intelligent Processing Systems',
     'ICLR': 'International Conference on Learning Representations',
