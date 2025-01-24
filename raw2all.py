@@ -52,6 +52,7 @@ mapping = {
     'LREC': 'Language Resources and Evaluation Conference',
     'MLSLP': 'Symposium on Machine Learning in Speech and Language Processing',
     'NAACL': 'Conference of the North American Chapter of the Association for Computational Linguistics',
+    'NAACL25': 'Annual Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics',
     'NeurIPS': 'Conference on Neural Information Processing Systems',
     'NCB': 'Nature Cell Biology',
     'NODALIDA': 'Nordic Conference on Computational Linguistics',
@@ -76,13 +77,15 @@ mapping = {
 }
 
 
-def abbr2full(abbr: str):
+def abbr2full(abbr: str, year: int):
     abbr = abbr.replace('{', '').replace('}', '')
     parts = abbr.split('-')
     is_abbr = [part in mapping for part in parts]
     if all(is_abbr):
         ret = ''
         for part in parts:
+            if int(year) >= 2025 and part == 'NAACL':
+                part = 'NAACL25'
             ret += ' and ' + mapping[part]
         ret = ret[5:] + f' ({abbr})'
         return ret.replace('  ', ' ').strip()
@@ -136,12 +139,12 @@ def process_entry(entry1) -> Entry | None:
     # clean up fields
     if entry1.entry_type == 'article':
         to_keep = ['volume', 'issue', 'publisher', 'pages']
-        new['journal'] = abbr2full(fields['journaltitle'].value)
+        new['journal'] = abbr2full(fields['journaltitle'].value, new['year'])
         if 'number' in fields:
             new['issue'] = fields['number'].value
     elif entry1.entry_type == 'inproceedings':
         to_keep = []
-        new['booktitle'] = 'Proceedings of ' + abbr2full(fields['booktitle'].value).strip()
+        new['booktitle'] = 'Proceedings of ' + abbr2full(fields['booktitle'].value, new['year']).strip()
     elif entry1.entry_type == 'incollection':
         to_keep = ['booktitle', 'pages', 'publisher']
     elif entry1.entry_type == 'thesis':
