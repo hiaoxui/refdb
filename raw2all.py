@@ -107,6 +107,19 @@ def fix_name(authors):
     return authors
 
 
+def shorten_name_list(authors):
+    # for the case of many authors, only show the first a couple
+    if len(authors) < 1024:
+        return authors
+    authors = list(map(lambda x: x.strip(), authors.split(' and ')))
+    n_preserve = 10
+    n_remove = len(authors) - n_preserve
+    authors = authors[:n_preserve]
+    authors.append(f'{n_remove} additional authors')
+    return ' and '.join(authors)
+
+
+
 def process_entry(entry1) -> Entry | None:
     entry1 = deepcopy(entry1)
     fields = entry1.fields_dict
@@ -133,7 +146,7 @@ def process_entry(entry1) -> Entry | None:
             arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
             if any([re.findall(pat, fields['eprint'].value) for pat in arxiv_patterns]):
                 new['url'] = 'https://arxiv.org/abs/' + fields['eprint'].value
-    new['author'] = fix_name(fields['author'].value)
+    new['author'] = shorten_name_list(fix_name(fields['author'].value))
 
     et = entry1.entry_type
     # clean up fields
