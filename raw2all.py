@@ -63,6 +63,7 @@ mapping = {
     'SALT': 'Semantics and Linguistic Theory',
     'SIGIR': 'ACM Special Interest Group on Information Retrieval',
     'SODA': 'Symposium on Discrete Algorithms',
+    'SOSP': 'Symposium on Operating Systems Principles',
     'STOC': 'Symposium on Theory of Computing',
     'TACL': 'Transactions of the Association for Computational Linguistics',
     'TFS': 'IEEE Transaction on Fuzzy Systems',
