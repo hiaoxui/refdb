@@ -45,6 +45,7 @@ mapping = {
     'IROS': 'International Conference on Intelligent Robots and Systems',
     'ISER': 'International Symposium on Experimental Robotics',
     'IWCS': 'International Conference on Computational Semantics',
+    'IWSLT': 'International Conference on Spoken Language Translation',
     'JAIR': 'Journal of Artificial Intelligence Research',
     'JASA': 'Journal of the American Statistical Association',
     'JMLR': 'Journal of Machine Learning Research',
