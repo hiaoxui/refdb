@@ -136,18 +136,19 @@ def process_entry(entry1) -> Entry | None:
         new['year'] = fields['date'].value[:4]
     else:
         new['year'] = fields['year']
-    if 'url' in fields:
+
+    if 'doi' in fields:
+        new['url'] = 'https://doi.org/' + fields['doi'].value
+    elif 'url' in fields:
         # prefer using https
         new['url'] = fields['url'].value.replace('http://', 'https://')
         if not new['url'].startswith('http'):
             new.pop('url', None)
-    else:
-        if 'doi' in fields:
-            new['url'] = 'https://doi.org/' + fields['doi'].value
-        elif fields.get('eprinttype', '') == 'arxiv' and 'eprint' in fields:
-            arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
-            if any([re.findall(pat, fields['eprint'].value) for pat in arxiv_patterns]):
-                new['url'] = 'https://arxiv.org/abs/' + fields['eprint'].value
+    elif fields.get('eprinttype', '') == 'arxiv' and 'eprint' in fields:
+        arxiv_patterns = [r'^\w+/\d+(v\d+)?$', r'^\d+\.\d+(v\d+)?$']
+        if any([re.findall(pat, fields['eprint'].value) for pat in arxiv_patterns]):
+            new['url'] = 'https://arxiv.org/abs/' + fields['eprint'].value
+
     new['author'] = shorten_name_list(fix_name(fields['author'].value))
 
     et = entry1.entry_type
@@ -168,7 +169,7 @@ def process_entry(entry1) -> Entry | None:
         et = 'misc'
         to_keep = []
 
-    common_keeps = ['year', 'url', 'title']
+    common_keeps = ['year', 'title']
     for k in list(fields):
         if k in common_keeps + to_keep:
             new[k] = fields[k].value
