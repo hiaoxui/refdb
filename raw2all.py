@@ -160,7 +160,7 @@ def process_entry(entry1) -> Entry | None:
             new['issue'] = fields['number'].value
     elif entry1.entry_type == 'inproceedings':
         to_keep = []
-        new['booktitle'] = 'Proceedings of ' + abbr2full(fields['booktitle'].value, new['year']).strip()
+        new['booktitle'] = abbr2full(fields['booktitle'].value, new['year']).strip()
     elif entry1.entry_type == 'incollection':
         to_keep = ['booktitle', 'pages', 'publisher']
     elif entry1.entry_type == 'thesis':
