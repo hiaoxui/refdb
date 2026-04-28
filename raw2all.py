@@ -71,6 +71,7 @@ mapping = {
     'TFS': 'IEEE Transaction on Fuzzy Systems',
     'TNN': 'IEEE Transaction on Neural Networks',
     'TOIS': 'ACM Transactions on Information Systems',
+    'TPAMI': 'IEEE Transactions on Pattern Analysis and Machine Intelligence',
     'TSP': 'IEEE Transaction on Signal Processing',
     'UAI': 'Uncertainty in Artificial Intelligence',
     'UIST': 'User Interface Software and Technology',
