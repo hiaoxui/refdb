@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 import traceback
 from copy import deepcopy
 from collections import defaultdict
@@ -214,7 +215,11 @@ def raw2all():
     new_db = Library(new_entries)
     bib_format = BibtexFormat()
     bib_format.indent = '  '
-    bibtexparser.write_file('./ref.bib', new_db, bibtex_format=bib_format)
+    file_path = Path('./ref.bib')
+    bibtexparser.write_file(file_path.as_posix(), new_db, bibtex_format=bib_format)
+    file_content = file_path.read_text()
+    file_content = '% This file was automatically generated; Do not edit it\n\n' + file_content
+    file_path.write_text(file_content)
 
 
 if __name__ == '__main__':
