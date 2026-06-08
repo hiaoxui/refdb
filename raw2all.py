@@ -72,6 +72,7 @@ mapping = {
     'TNN': 'IEEE Transaction on Neural Networks',
     'TOIS': 'ACM Transactions on Information Systems',
     'TPAMI': 'IEEE Transactions on Pattern Analysis and Machine Intelligence',
+    'TMLR': 'Transactions on Machine Learning Research',
     'TSP': 'IEEE Transaction on Signal Processing',
     'UAI': 'Uncertainty in Artificial Intelligence',
     'UIST': 'User Interface Software and Technology',
@@ -163,6 +164,7 @@ def process_entry(entry1) -> Entry | None:
     elif entry1.entry_type == 'inproceedings':
         to_keep = []
         new['booktitle'] = abbr2full(fields['booktitle'].value, new['year']).strip()
+        new['booktitle'] = 'Proceedings of ' + new['booktitle']
     elif entry1.entry_type == 'incollection':
         to_keep = ['booktitle', 'pages', 'publisher']
     elif entry1.entry_type == 'thesis':
