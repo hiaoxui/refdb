@@ -53,6 +53,7 @@ mapping = {
     'KDD': 'International Conference on Knowledge Discovery and Data Mining',
     'LREC': 'Language Resources and Evaluation Conference',
     'MLSLP': 'Symposium on Machine Learning in Speech and Language Processing',
+    'MLSys': 'Annual Conference on Machine Learning and Systems',
     'NAACL': 'Conference of the North American Chapter of the Association for Computational Linguistics',
     'NAACL25': 'Annual Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics',
     'NeurIPS': 'Conference on Neural Information Processing Systems',
