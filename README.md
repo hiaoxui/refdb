@@ -2,5 +2,5 @@
 
 Dump the raw bib file from Zotero/BetterBibTex and clean it up with `raw2all.py`.
 
-Output: `ref.bib`.
+Outputs: `ref.bib` and `my.bib`.
 

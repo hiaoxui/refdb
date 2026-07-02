@@ -82,6 +82,8 @@ mapping = {
     'WWW': 'World Wide Web',
 }
 
+MY_AUTHOR_NAMES = {'Qin, Guanghui', 'Guanghui Qin'}
+
 
 def abbr2full(abbr: str, year: int):
     abbr = abbr.replace('{', '').replace('}', '')
@@ -123,6 +125,23 @@ def shorten_name_list(authors):
     authors = authors[:n_preserve]
     authors.append(f'{n_remove} additional authors')
     return ' and '.join(authors)
+
+
+def has_my_author(entry: Entry) -> bool:
+    authors = entry.fields_dict['author'].value
+    authors = authors.replace('{', '').replace('}', '')
+    authors = re.sub(r'\s+', ' ', authors)
+    return any(author.strip() in MY_AUTHOR_NAMES for author in authors.split(' and '))
+
+
+def write_bib(entries: list[Entry], file_path: Path):
+    new_db = Library(entries) # type: ignore
+    bib_format = BibtexFormat()
+    bib_format.indent = '  '
+    bibtexparser.write_file(file_path.as_posix(), new_db, bibtex_format=bib_format) # type: ignore
+    file_content = file_path.read_text()
+    file_content = '% This file was automatically generated; Do not edit it\n\n' + file_content
+    file_path.write_text(file_content)
 
 
 
@@ -198,7 +217,7 @@ def inspect(bib_db):
 
 def raw2all():
     raw_path = './raw.bib'
-    bib_db = bibtexparser.parse_file(raw_path)
+    bib_db = bibtexparser.parse_file(raw_path) # type: ignore
     # inspect(bib_db)
 
     new_entries = list()
@@ -216,14 +235,8 @@ def raw2all():
     if errored:
         print('Error when processing', ' '.join(errored))
 
-    new_db = Library(new_entries)
-    bib_format = BibtexFormat()
-    bib_format.indent = '  '
-    file_path = Path('./ref.bib')
-    bibtexparser.write_file(file_path.as_posix(), new_db, bibtex_format=bib_format)
-    file_content = file_path.read_text()
-    file_content = '% This file was automatically generated; Do not edit it\n\n' + file_content
-    file_path.write_text(file_content)
+    write_bib(new_entries, Path('./ref.bib'))
+    write_bib([entry for entry in new_entries if has_my_author(entry)], Path('./my.bib'))
 
 
 if __name__ == '__main__':
